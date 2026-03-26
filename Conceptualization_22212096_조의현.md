@@ -35,6 +35,8 @@ Revision data | Version # | Description | Author
 ## 2. System context diagram
 
 ![System Context Diagram](./diagram.png)
+
+
 [Player] -- (스킬 입력 / 보상 선택) -> [Game System]
 [Player] <- (시각적 피드백 / 전투 결과) -- [Game System]
 
