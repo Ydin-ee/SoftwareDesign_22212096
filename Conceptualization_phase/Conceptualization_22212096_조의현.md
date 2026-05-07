@@ -8,6 +8,7 @@
 
 **E-mail :** 22212096@yu.ac.kr
 
+**GitHub repository :** https://github.com/Ydin-ee/SoftwareDesign_22212096
 
 ## [ Revision history ]
 | Revision data | Version # | Description | Author |
