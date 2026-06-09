@@ -39,13 +39,6 @@ public class GameManager : MonoBehaviour
         {
             battleManager.ChangeState(BattleState.Initializing);
         }
-
-        // 🔥 매 스테이지가 시작될 때마다 해금된 스킬(선택 정렬 등) 버튼을 갱신합니다.
-        UIManager uiManager = FindFirstObjectByType<UIManager>();
-        if (uiManager != null)
-        {
-            uiManager.UpdateSkillUI();
-        }
     }
 
     public void OnStageCleared()
@@ -76,17 +69,17 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
-        Debug.Log("🚨 [2단계] GameManager에서 GameOver 함수 실행됨!");
-        UIManager uiManager = FindFirstObjectByType<UIManager>();
+        Debug.Log("🚨 [2단계] GameManager의 GameOver 함수 실행됨!");
         
+        UIManager uiManager = FindFirstObjectByType<UIManager>();
         if (uiManager != null)
         {
-            Debug.Log("🚨 [3단계] UIManager 찾음! 패널 켜기 지시");
+            Debug.Log("🚨 [3단계] UIManager에게 패널 켜기 지시 완료!");
             uiManager.ShowGameOver();
         }
         else
         {
-            Debug.LogError("🚨 UIManager를 씬에서 찾을 수 없습니다!");
+            Debug.LogError("🚨 UIManager를 찾을 수 없습니다!");
         }
     }
 

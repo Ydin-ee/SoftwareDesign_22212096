@@ -5,30 +5,26 @@ public class PlayerController : MonoBehaviour
 {
     [SerializeField] private int maxHP = 100;
     [Header("Effects")]
-    [SerializeField] private GameObject damageTextPrefab; // 띄울 데미지 텍스트 프리팹
-    [SerializeField] private Transform damageTextSpawnPoint; // 텍스트가 생성될 위치 (주로 HP바 근처)
+    [SerializeField] private GameObject damageTextPrefab; 
+    [SerializeField] private Transform damageTextSpawnPoint; 
     
-    // 외부에서 최대 체력을 읽을 수 있도록 허용
     public int MaxHP { get { return maxHP; } }
 
     private int currentHP;
+    private int damageReduction = 0;
 
     private void Start()
     {
         currentHP = maxHP;
         UpdateUI(); 
     }
-// 데미지 감소량을 임시로 기억할 변수
-    private int damageReduction = 0;
 
-    // 버블 정렬 스킬 발동 시 호출될 데미지 감소 함수
     public void AddDamageReduction(int amount)
     {
         damageReduction += amount;
         Debug.Log($"[버블 정렬 진화 효과] 다음 적의 공격 데미지가 {amount} 감소합니다!");
     }
 
-    // 기존의 TakeDamage 함수를 아래와 같이 수정합니다.
     public void TakeDamage(int damage)
     {
         int finalDamage = damage - damageReduction;
@@ -38,26 +34,35 @@ public class PlayerController : MonoBehaviour
         if (currentHP < 0) currentHP = 0;
         
         damageReduction = 0; 
-        UpdateUI(finalDamage);
+        
+        // 🔥 매개변수 없이 호출하도록 수정되었습니다.
+        UpdateUI(); 
 
         if (finalDamage > 0)
         {
             CameraManager.Instance.ShakeCamera(0.2f, 0.4f);
 
-            // 🔥 오리지널 DamageText의 Setup 함수를 호출하는 로직
             if (damageTextPrefab != null && damageTextSpawnPoint != null)
             {
-                // 1. 프리팹 생성
                 GameObject dmgTextObj = Instantiate(damageTextPrefab, damageTextSpawnPoint.position, Quaternion.identity, damageTextSpawnPoint.parent);
-                
-                // 2. 생성된 오브젝트에서 DamageText 스크립트 컴포넌트를 추출합니다.
                 DamageText dmgTextScript = dmgTextObj.GetComponent<DamageText>();
-                
                 if (dmgTextScript != null)
                 {
-                    // 3. 가지고 계시던 고유의 Setup 함수에 최종 데미지를 넘겨 연출을 시작합니다!
                     dmgTextScript.Setup(finalDamage);
                 }
+            }
+        }
+
+        if (currentHP <= 0)
+        {
+            Debug.Log("🚨 [1단계] 플레이어 체력 0 도달! GameManager 호출 시도");
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.GameOver();
+            }
+            else
+            {
+                Debug.LogError("🚨 GameManager를 찾을 수 없습니다! 하이어라키에 GameManager 스크립트가 붙어있나요?");
             }
         }
     }
@@ -70,7 +75,6 @@ public class PlayerController : MonoBehaviour
         UpdateUI();
     }
 
-    // 🔥 에러의 원인이었던 새로운 함수 추가 부분!
     public void IncreaseMaxHP(int amount)
     {
         maxHP += amount;
@@ -79,18 +83,13 @@ public class PlayerController : MonoBehaviour
         UpdateUI();
     }
 
-    private void UpdateUI(int lastDamage = 0)
+    // 🔥 매개변수(int damage)를 삭제하여 깔끔하게 통일했습니다.
+    public void UpdateUI()
     {
         UIManager uiManager = FindFirstObjectByType<UIManager>();
         if (uiManager != null)
         {
-            uiManager.UpdateHPBar(currentHP, maxHP);
-            
-            if (lastDamage > 0)
-            {
-                uiManager.SpawnDamageText(lastDamage);
-            }
+            uiManager.UpdateHPBar(currentHP, maxHP); 
         }
     }
-    
 }
