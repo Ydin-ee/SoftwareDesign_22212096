@@ -80,7 +80,15 @@ public class RewardManager : MonoBehaviour
         PlayerSkillManager skillManager = FindFirstObjectByType<PlayerSkillManager>();
         if (skillManager != null)
         {
-            skillManager.UpgradeSkill(newSkillName); // 없는 스킬이면 LV.1로 새로 획득합니다.
+            // 1. 스킬의 레벨을 올려서 획득 처리합니다.
+            skillManager.UpgradeSkill(newSkillName); 
+
+            // 🔥 2. 새로 얻은 스킬을 장착 슬롯(서브 메뉴)에도 추가해 줍니다.
+            if (!skillManager.equippedSortSkills.Contains(newSkillName))
+            {
+                skillManager.equippedSortSkills.Add(newSkillName);
+                Debug.Log($"[{newSkillName}] 스킬이 장착 슬롯에 추가되었습니다!");
+            }
         }
 
         if (rewardPanel != null) rewardPanel.SetActive(false);

@@ -1,8 +1,12 @@
+using TMPro;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private int maxHP = 100;
+    [Header("Effects")]
+    [SerializeField] private GameObject damageTextPrefab; // 띄울 데미지 텍스트 프리팹
+    [SerializeField] private Transform damageTextSpawnPoint; // 텍스트가 생성될 위치 (주로 HP바 근처)
     
     // 외부에서 최대 체력을 읽을 수 있도록 허용
     public int MaxHP { get { return maxHP; } }
@@ -27,23 +31,34 @@ public class PlayerController : MonoBehaviour
     // 기존의 TakeDamage 함수를 아래와 같이 수정합니다.
     public void TakeDamage(int damage)
     {
-        // 1. 방패 스킬과 별개로 데미지 감소 수치를 먼저 계산합니다.
         int finalDamage = damage - damageReduction;
-        if (finalDamage < 0) finalDamage = 0; // 데미지가 마이너스가 되지 않도록 방지
+        if (finalDamage < 0) finalDamage = 0; 
         
         currentHP -= finalDamage;
         if (currentHP < 0) currentHP = 0;
         
-        Debug.Log($"적의 공격! (원래 데미지: {damage} ➔ 감소된 데미지: {finalDamage}) 남은 체력: {currentHP}/{maxHP}");
-        
-        // 2. 데미지 감소 효과는 1회용이므로 맞고 나면 다시 0으로 초기화합니다.
         damageReduction = 0; 
-        
         UpdateUI(finalDamage);
 
-        if (currentHP <= 0)
+        if (finalDamage > 0)
         {
-            GameManager.Instance.GameOver();
+            CameraManager.Instance.ShakeCamera(0.2f, 0.4f);
+
+            // 🔥 오리지널 DamageText의 Setup 함수를 호출하는 로직
+            if (damageTextPrefab != null && damageTextSpawnPoint != null)
+            {
+                // 1. 프리팹 생성
+                GameObject dmgTextObj = Instantiate(damageTextPrefab, damageTextSpawnPoint.position, Quaternion.identity, damageTextSpawnPoint.parent);
+                
+                // 2. 생성된 오브젝트에서 DamageText 스크립트 컴포넌트를 추출합니다.
+                DamageText dmgTextScript = dmgTextObj.GetComponent<DamageText>();
+                
+                if (dmgTextScript != null)
+                {
+                    // 3. 가지고 계시던 고유의 Setup 함수에 최종 데미지를 넘겨 연출을 시작합니다!
+                    dmgTextScript.Setup(finalDamage);
+                }
+            }
         }
     }
 

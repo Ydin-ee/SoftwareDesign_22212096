@@ -30,6 +30,15 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject sortSubMenuPanel; // 하위 스킬을 띄울 팝업 패널
     [SerializeField] private Button[] sortSkillButtons;   // 패널 안의 스킬 버튼 3개
     [SerializeField] private TextMeshProUGUI[] sortSkillTexts;
+    
+
+    [Header("Warning UI")]
+    [SerializeField] private GameObject warningTextObject; // 껐다 켤 텍스트 오브젝트
+    [SerializeField] private TextMeshProUGUI warningText;  // 글씨를 바꿀 컴포넌트
+
+    [Header("Game Over UI")]
+    [SerializeField] private GameObject gameOverPanel;
+
     public void OnMainSortButtonClicked()
     {
         // 서브 메뉴가 꺼져있으면 켜고, 켜져있으면 끕니다 (토글 기능)
@@ -171,6 +180,14 @@ public class UIManager : MonoBehaviour
 
     // GameManager에서 InitGame()을 호출하거나 전투가 시작될 때, 
     // 혹은 UIManager의 Start()에서 이 함수를 실행하도록 연결해 줍니다.
+    private void Start()
+    {
+        // 게임 시작 시 서브 메뉴 패널이 켜져 있다면 무조건 숨깁니다.
+        if (sortSubMenuPanel != null)
+        {
+            sortSubMenuPanel.SetActive(false);
+        }
+    }
     public void UpdateSkillUI()
     {
         PlayerSkillManager skillManager = FindFirstObjectByType<PlayerSkillManager>();
@@ -191,5 +208,37 @@ public class UIManager : MonoBehaviour
             selectionSortSkill.ActivateSkill();
         }
     }
-    
+
+    public void ShowWarning(string message, float duration = 1.5f)
+    {
+        if (warningTextObject != null && warningText != null)
+        {
+            warningText.text = message;
+            warningTextObject.SetActive(true); // 텍스트 켜기
+            
+            // 기존에 돌고 있던 코루틴이 있다면 멈추고 새로 시작 (연속으로 뜰 때 꼬임 방지)
+            StopAllCoroutines(); 
+            StartCoroutine(HideWarningRoutine(duration));
+        }
+    }
+
+    private System.Collections.IEnumerator HideWarningRoutine(float duration)
+    {
+        // 지정된 시간만큼 기다린 후
+        yield return new WaitForSeconds(duration);
+        
+        // 텍스트를 다시 숨깁니다.
+        if (warningTextObject != null)
+        {
+            warningTextObject.SetActive(false);
+        }
+    }
+
+    public void ShowGameOver()
+    {
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(true);
+        }
+    }
 }

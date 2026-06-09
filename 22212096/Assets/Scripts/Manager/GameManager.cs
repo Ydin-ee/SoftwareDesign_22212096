@@ -76,17 +76,26 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
-        Debug.Log("게임 종료!");
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
-        if (restartButton != null)
+        Debug.Log("🚨 [2단계] GameManager에서 GameOver 함수 실행됨!");
+        UIManager uiManager = FindFirstObjectByType<UIManager>();
+        
+        if (uiManager != null)
         {
-            restartButton.onClick.RemoveAllListeners();
-            restartButton.onClick.AddListener(RestartGame);
+            Debug.Log("🚨 [3단계] UIManager 찾음! 패널 켜기 지시");
+            uiManager.ShowGameOver();
+        }
+        else
+        {
+            Debug.LogError("🚨 UIManager를 씬에서 찾을 수 없습니다!");
         }
     }
 
-    private void RestartGame()
+    // 🔥 '다시 시작' 버튼을 눌렀을 때 실행될 함수입니다.
+    public void RestartGame()
     {
+        Debug.Log("게임을 다시 시작합니다!");
+        // 현재 활성화된 씬의 이름을 가져와서 다시 로드(=초기화)합니다.
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
+    
 }
