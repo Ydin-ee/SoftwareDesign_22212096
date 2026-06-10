@@ -1,37 +1,47 @@
 using UnityEngine;
-
+using System.Collections.Generic;
 public class DataStructureSkill : MonoBehaviour
 {
-    private int currentStacks = 0;
+    // C#의 실제 Stack 자료구조를 사용하여 방패 스택을 관리합니다.
+    private Stack<float> shieldStack = new Stack<float>();
 
-    // 플레이어가 방패 스킬을 사용했을 때(턴 소모 시) 호출되는 함수
     public void ExecuteShieldSkill()
     {
-        // 1. 플레이어 몸체에 붙어있는 스킬 매니저를 찾습니다.
-        PlayerSkillManager skillManager = GetComponent<PlayerSkillManager>();
+        // PlayerSkillManager에서 스택 쉴드의 레벨을 가져옵니다. (없으면 기본 1레벨)
+        PlayerSkillManager skillManager = FindFirstObjectByType<PlayerSkillManager>();
+        int level = (skillManager != null) ? skillManager.GetSkillLevel("StackShield") : 1;
         
-        // 2. "StackShield" 스킬의 현재 레벨을 가져옵니다. (기본값 1)
-        int level = 1;
-        if (skillManager != null)
-        {
-            level = skillManager.GetSkillLevel("StackShield");
-        }
+        // 최대 레벨 제한 (최대 3)
+        if (level > 3) level = 3;
 
-        // 3. 레벨만큼 방패 스택을 한 번에 추가합니다!
-        currentStacks += level; 
+        shieldStack.Clear(); // 턴이 지나 다시 쓰면 기존 스택은 초기화하고 새로 쌓습니다.
+
+        // 레벨에 따라 스택을 푸시(Push)합니다.
+        if (level >= 1) shieldStack.Push(0.3f); // 30% 방어
+        if (level >= 2) shieldStack.Push(0.5f); // 50% 방어
+        if (level >= 3) shieldStack.Push(0.7f); // 70% 방어
+
+        Debug.Log($"스택 쉴드 전개! (현재 레벨: {level}, 장전된 방패 수: {shieldStack.Count}개)");
         
-        Debug.Log($"[방패 스킬 발동] LV.{level} 적용: 방패가 {level}겹 추가되었습니다! (현재 총 {currentStacks}겹)");
+        UIManager uiManager = FindFirstObjectByType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.ShowWarning($"스택 쉴드 활성화! (Lv.{level})", 1.0f);
+        }
     }
 
-    // 적이 공격할 때 BattleManager가 호출하는 방어 판정 함수
-    public bool ConsumeShield()
+    // 적이 공격할 때 BattleManager가 호출할 함수입니다.
+    // 방어율(예: 0.7)을 반환하고, 방패가 없으면 0을 반환합니다.
+    public float ConsumeShield()
     {
-        if (currentStacks > 0)
+        if (shieldStack.Count > 0)
         {
-            currentStacks--;
-            Debug.Log($"[방어 성공] 방패가 적의 공격을 막고 1겹 깨졌습니다. (남은 방패: {currentStacks}겹)");
-            return true;
+            // 가장 위에 있는 스택(마지막에 넣은 것)을 뽑아냅니다 (Pop).
+            float reductionRate = shieldStack.Pop();
+            Debug.Log($"방패 활성화! 데미지 {reductionRate * 100}% 감소. (남은 스택: {shieldStack.Count}개)");
+            return reductionRate;
         }
-        return false;
+        
+        return 0f; // 스택이 비어있으면 방어 불가
     }
 }

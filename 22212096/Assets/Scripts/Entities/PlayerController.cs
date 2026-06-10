@@ -8,6 +8,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject damageTextPrefab; 
     [SerializeField] private Transform damageTextSpawnPoint; 
     
+    [Header("Audio")]
+    [SerializeField] private AudioClip hitSound;
+
     public int MaxHP { get { return maxHP; } }
 
     private int currentHP;
@@ -32,38 +35,27 @@ public class PlayerController : MonoBehaviour
         
         currentHP -= finalDamage;
         if (currentHP < 0) currentHP = 0;
-        
         damageReduction = 0; 
-        
-        // 🔥 매개변수 없이 호출하도록 수정되었습니다.
         UpdateUI(); 
 
         if (finalDamage > 0)
         {
             CameraManager.Instance.ShakeCamera(0.2f, 0.4f);
 
+            // 🔥 플레이어 피격 효과음 재생
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SFXType.PlayerHit);
+
             if (damageTextPrefab != null && damageTextSpawnPoint != null)
             {
                 GameObject dmgTextObj = Instantiate(damageTextPrefab, damageTextSpawnPoint.position, Quaternion.identity, damageTextSpawnPoint.parent);
                 DamageText dmgTextScript = dmgTextObj.GetComponent<DamageText>();
-                if (dmgTextScript != null)
-                {
-                    dmgTextScript.Setup(finalDamage);
-                }
+                if (dmgTextScript != null) dmgTextScript.Setup(finalDamage);
             }
         }
 
         if (currentHP <= 0)
         {
-            Debug.Log("🚨 [1단계] 플레이어 체력 0 도달! GameManager 호출 시도");
-            if (GameManager.Instance != null)
-            {
-                GameManager.Instance.GameOver();
-            }
-            else
-            {
-                Debug.LogError("🚨 GameManager를 찾을 수 없습니다! 하이어라키에 GameManager 스크립트가 붙어있나요?");
-            }
+            if (GameManager.Instance != null) GameManager.Instance.GameOver();
         }
     }
 
@@ -71,16 +63,20 @@ public class PlayerController : MonoBehaviour
     {
         currentHP += amount;
         if (currentHP > maxHP) currentHP = maxHP;
-        Debug.Log($"체력을 {amount} 회복했습니다. 현재 체력: {currentHP}/{maxHP}");
         UpdateUI();
+
+        // ⚡ 통합 버프 사운드 재생
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SFXType.PlayerBuff);
     }
 
     public void IncreaseMaxHP(int amount)
     {
         maxHP += amount;
         currentHP += amount;
-        Debug.Log($"최대 체력이 {amount} 증가했습니다. 현재 체력: {currentHP}/{maxHP}");
         UpdateUI();
+
+        // ⚡ 통합 버프 사운드 재생
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SFXType.PlayerBuff);
     }
 
     // 🔥 매개변수(int damage)를 삭제하여 깔끔하게 통일했습니다.

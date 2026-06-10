@@ -39,6 +39,15 @@ public class GameManager : MonoBehaviour
         {
             battleManager.ChangeState(BattleState.Initializing);
         }
+
+        // 🔥 스테이지에 맞는 배경음악 재생 로직 추가
+        if (AudioManager.Instance != null)
+        {
+            if (currentStage % 5 == 0)
+                AudioManager.Instance.PlayBGM(BGMType.BossBattle); // 보스층 BGM
+            else
+                AudioManager.Instance.PlayBGM(BGMType.NormalBattle); // 일반층 BGM
+        }
     }
 
     public void OnStageCleared()
@@ -67,28 +76,36 @@ public class GameManager : MonoBehaviour
         InitGame();
     }
 
+
+
     public void GameOver()
     {
-        Debug.Log("🚨 [2단계] GameManager의 GameOver 함수 실행됨!");
+        Debug.Log("게임 오버!");
         
+        // 🔥 BGM을 멈추고 게임오버 연출음 재생
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopBGM();
+            AudioManager.Instance.PlaySFX(SFXType.GameOver);
+        }
+
         UIManager uiManager = FindFirstObjectByType<UIManager>();
-        if (uiManager != null)
-        {
-            Debug.Log("🚨 [3단계] UIManager에게 패널 켜기 지시 완료!");
-            uiManager.ShowGameOver();
-        }
-        else
-        {
-            Debug.LogError("🚨 UIManager를 찾을 수 없습니다!");
-        }
+        if (uiManager != null) uiManager.ShowGameOver();
     }
 
-    // 🔥 '다시 시작' 버튼을 눌렀을 때 실행될 함수입니다.
-    public void RestartGame()
+    public void RestartGameFromFirstStage()
     {
-        Debug.Log("게임을 다시 시작합니다!");
-        // 현재 활성화된 씬의 이름을 가져와서 다시 로드(=초기화)합니다.
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopAllSFX();
+        }
+        // 1. 스테이지 정보를 1층으로 초기화합니다.
+        currentStage = 1;
+
+        // 2. 혹시 멈춰있을지 모르는 전역 시간을 정상화합니다.
+        Time.timeScale = 1f;
+
+        // 3. 메인 전투 씬을 깨끗하게 새로 로드합니다.
+        UnityEngine.SceneManagement.SceneManager.LoadScene("BattleScene");
     }
-    
 }

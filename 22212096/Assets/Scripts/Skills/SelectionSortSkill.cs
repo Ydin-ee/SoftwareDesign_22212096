@@ -3,6 +3,15 @@ using UnityEngine;
 
 public class SelectionSortSkill : MonoBehaviour
 {
+    [Header("Skill Level Settings")]
+    [SerializeField] private int currentLevel = 1; // 현재 스킬 레벨
+    [SerializeField] private int maxLevel = 5;     // 🔥 스킬의 최대 레벨 (예시: 5레벨 만렙)
+    public bool IsMaxLevel => currentLevel >= maxLevel;
+
+    // 외부(보상 창)에서 현재 레벨을 텍스트로 띄우고 싶을 때 사용
+    public int CurrentLevel => currentLevel;
+    public int MaxLevel => maxLevel;
+
     private List<int> selectedIndices = new List<int>();
     private BattleManager battleManager;
     private ArrayVisualizer visualizer;
@@ -21,6 +30,11 @@ public class SelectionSortSkill : MonoBehaviour
         if (visualizer != null) visualizer.ResetAllBlocksColor();
         
         Debug.Log("[선택 정렬 발동] 위치를 바꿀 블록 2개를 순서대로 클릭해 주세요!");
+        UIManager uiManager = FindFirstObjectByType<UIManager>();
+        if (uiManager != null)
+        {
+            uiManager.ShowWarning("선택 정렬 발동!\n두 블록을 선택하세요.", 1.0f);
+        }
     }
 
     // SelectionSortSkill.cs 의 OnBlockClicked 함수 수정
@@ -70,5 +84,20 @@ public class SelectionSortSkill : MonoBehaviour
         }
 
         selectedIndices.Clear();
+    }
+    
+    public void UpgradeSkill()
+    {
+        if (IsMaxLevel)
+        {
+            Debug.LogWarning($"{gameObject.name} 스킬이 이미 최대 레벨입니다!");
+            return;
+        }
+
+        currentLevel++;
+        Debug.Log($"{gameObject.name} 스킬 강화 성공! 현재 레벨: {currentLevel}");
+        
+        // 여기에 레벨업에 따른 스킬 성능 증가 로직을 추가할 수 있습니다.
+        // 예: 쿨타임 감소, 위력 증가 등
     }
 }

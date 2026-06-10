@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.XR;
 
 public enum BattleState
 {
@@ -9,35 +8,70 @@ public enum BattleState
     EnemyTurn,
     EvaluateVictory
 }
+
 public class BattleManager : MonoBehaviour
 {
+    [Header("Enemy Gimmick Probabilities")]
+    [Range(0f, 1f)]
+    [SerializeField] private float shuffleProbability = 0.2f; // 섞기 확률
+
+    [Range(0f, 1f)]
+    [SerializeField] private float lockProbability = 0.3f;    // 잠금(빙결) 확률
+    
+    public bool IsInputBlocked { get; private set; } = false;
+
     private BattleState currentState;
-    private EnemyData currentEnemy;
+    public EnemyData currentEnemy;
+    
+    // 🔥 턴 교대를 추적할 플래그 변수
     private bool isPlayerTurn = true;
 
     public int LockedBlockIndex { get; private set; } = -1;
 
     public void ChangeState(BattleState newState)
     {
+        IsInputBlocked = true;
         currentState = newState;
+        StopAllCoroutines();
+
         switch (currentState)
         {
             case BattleState.Initializing:
                 SetupBattle();
                 break;
+
             case BattleState.PlayerTurn:
-                isPlayerTurn = true;
-                Debug.Log("플레이어의 턴입니다. 스킬을 선택하세요.");
+                // 🔥 플레이어 턴으로 진입 시 플래그를 true로 맞춥니다.
+                isPlayerTurn = true; 
+                StartCoroutine(PlayerTurnStartRoutine());
                 break;
+
             case BattleState.EnemyTurn:
-                isPlayerTurn = false;
-                ExecuteEnemyPattern();
+                // 🔥 적 턴으로 진입 시 플래그를 false로 명확히 바꿉니다.
+                isPlayerTurn = false; 
+                StartCoroutine(EnemyTurnDelayRoutine());
                 break;
+
             case BattleState.EvaluateVictory:
                 CheckBattleResult();
                 break;
         }
     }
+
+    private System.Collections.IEnumerator PlayerTurnStartRoutine()
+    {
+        IsInputBlocked = true; 
+        yield return new WaitForSeconds(0.6f); 
+        IsInputBlocked = false; 
+        Debug.Log("플레이어 입력 잠금 해제. 행동을 선택하세요.");
+    }
+
+    private System.Collections.IEnumerator EnemyTurnDelayRoutine()
+    {
+        yield return new WaitForSeconds(0.7f);
+        ExecuteEnemyPattern();
+    }
+
     public void OnPlayerSkillSelected(SkillBase selectedSkill)
     {
         if(currentState != BattleState.PlayerTurn)
@@ -50,16 +84,17 @@ public class BattleManager : MonoBehaviour
 
     private void SetupBattle()
     {
-        // 1. GameManager에서 현재 스테이지 번호를 가져옵니다.
-        int currentStage = GameManager.Instance.CurrentStage;
+        // 🔥 [버그 픽스] 전투 세팅 시점에 기본 배틀 BGM을 확실하게 다시 틀어줍니다.
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayBGM(BGMType.NormalBattle);
+        }
 
-        // 2. 난이도 공식 적용 (예: 기본 5칸에서 시작하여, 3스테이지마다 1칸씩 증가)
+        int currentStage = GameManager.Instance.CurrentStage;
         int calculatedSize = 5 + (currentStage / 3);
 
-        // 3. UI 화면(가로 길이)을 벗어나지 않도록 최대 칸수를 제한합니다. (예: 최대 8칸)
         if (calculatedSize > 8) calculatedSize = 8;
 
-        // 4. 계산된 크기로 새로운 적(난수 배열)을 생성합니다.
         currentEnemy = new EnemyData(calculatedSize);
         Debug.Log($"전투 세팅 완료: {currentStage}스테이지, 배열 크기 {calculatedSize}칸 등장!");
         
@@ -75,40 +110,62 @@ public class BattleManager : MonoBehaviour
     private void ExecuteEnemyPattern()
     {
         Debug.Log("적이 공격합니다!");
-
-        // 매 턴이 시작될 때 이전 턴의 잠금을 해제합니다.
         LockedBlockIndex = -1; 
 
-        DataStructureSkill shieldSkill = FindFirstObjectByType<DataStructureSkill>();
+        // 🔥 스택과 큐를 모두 찾습니다.
+        DataStructureSkill stackShield = FindFirstObjectByType<DataStructureSkill>();
+        QueueShieldSkill queueShield = FindFirstObjectByType<QueueShieldSkill>();
         PlayerController player = FindFirstObjectByType<PlayerController>();
 
-        if (shieldSkill != null && shieldSkill.ConsumeShield())
+        int baseEnemyDamage = 10; 
+        float reductionRate = 0f;
+
+        // 1. 스택 쉴드가 켜져 있다면 먼저 방어율을 가져옵니다.
+        if (stackShield != null)
         {
-            Debug.Log("방어 성공! 플레이어가 피해를 입지 않았습니다.");
+            reductionRate = stackShield.ConsumeShield();
         }
-        else if (player != null)
+        
+        // 2. 스택 쉴드가 없거나 소모되었다면, 큐 쉴드가 있는지 확인합니다.
+        if (reductionRate <= 0f && queueShield != null)
         {
-            player.TakeDamage(10);
+            reductionRate = queueShield.ConsumeShield();
         }
 
-        // 🔥 적 방해 패턴 고도화 (층수에 따른 기믹 진화)
+        int finalDamage = Mathf.RoundToInt(baseEnemyDamage * (1f - reductionRate));
+
+        if (reductionRate > 0)
+        {
+            Debug.Log($"[방어 성공] 적의 데미지가 {reductionRate * 100}% 감소하여 {finalDamage}의 피해만 입습니다!");
+        }
+
+        if (player != null)
+        {
+            player.TakeDamage(finalDamage);
+        }
+
         int currentStage = GameManager.Instance.CurrentStage;
         if (currentStage >= 15)
         {
-            // 15층 이상: 30% 확률로 빙결, 30% 확률로 셔플
             float rand = Random.Range(0f, 1f);
-            if (rand < 0.6f) ExecuteLockPattern();
-            else if (rand < 0.4f) ExecuteShufflePattern();
+            if (rand < lockProbability) 
+            {
+                ExecuteLockPattern();
+            }
+            else if (rand < lockProbability + shuffleProbability) 
+            {
+                ExecuteShufflePattern();
+            }
         }
         else if (currentStage >= 5)
         {
-            // 5층~14층: 30% 확률로 셔플만
-            if (currentStage % 5 == 0 || Random.Range(0f, 1f) < 0.3f)
+            if (Random.Range(0f, 1f) < shuffleProbability)
             {
                 ExecuteShufflePattern();
             }
         }
 
+        // 공격 및 기믹 적용이 완전히 끝난 후 판정 스테이트로 이동
         ChangeState(BattleState.EvaluateVictory);
     }
 
@@ -117,10 +174,10 @@ public class BattleManager : MonoBehaviour
         int[] data = currentEnemy.GetArray();
         if (data.Length > 0)
         {
-            // 무작위 블록 하나를 골라 잠가버립니다.
             LockedBlockIndex = Random.Range(0, data.Length);
             Debug.Log($"[적 방해 패턴 발동!] {LockedBlockIndex}번 블록이 얼어붙었습니다!");
-
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SFXType.EnemyGimmick);
+            
             UIManager uiManager = FindFirstObjectByType<UIManager>();
             if (uiManager != null)
             {
@@ -130,14 +187,12 @@ public class BattleManager : MonoBehaviour
             ArrayVisualizer visualizer = FindFirstObjectByType<ArrayVisualizer>();
             if (visualizer != null)
             {
-                // 화면을 갱신하고, 잠긴 블록을 회색으로 칠합니다.
                 visualizer.RenderBlocks(data);
                 visualizer.HighlightBlock(LockedBlockIndex, Color.gray);
             }
         }
     }
 
-    // 무작위 두 블록의 위치를 강제로 바꾸는 함수
     private void ExecuteShufflePattern()
     {
         int[] data = currentEnemy.GetArray();
@@ -157,8 +212,8 @@ public class BattleManager : MonoBehaviour
             data[indexB] = temp;
 
             Debug.Log($"[적 방해 패턴 발동!] 적이 {indexA}번과 {indexB}번 블록을 섞어버렸습니다!");
-
-            // 🔥 추가된 부분: UIManager를 찾아 경고 텍스트를 띄웁니다.
+            if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SFXType.EnemyGimmick);
+            
             UIManager uiManager = FindFirstObjectByType<UIManager>();
             if (uiManager != null)
             {
@@ -177,26 +232,26 @@ public class BattleManager : MonoBehaviour
     {
         if (currentEnemy.IsSorted())
         {
-            // 🔥 직접 RewardManager를 부르지 않고, GameManager에게 처리를 넘깁니다.
             GameManager.Instance.OnStageCleared();
         }
         else
         {
+            // 🔥 버그 수정 완료: 방금 행동을 마친 주체(isPlayerTurn)의 '반대' 주체에게 턴을 넘겨줍니다.
             if (isPlayerTurn)
             {
+                // 플레이어가 정렬을 시도했으나 미완성인 경우 ➔ 적 턴으로 전환
                 ChangeState(BattleState.EnemyTurn);
             }
             else
             {
+                // 적이 공격 패턴을 모두 마친 경우 ➔ 다시 플레이어 턴으로 안전하게 환원
                 ChangeState(BattleState.PlayerTurn);
             }
         }
     }
 
-    // 선택 정렬 스킬 등에서 특정 두 블록의 위치를 바꿀 때 호출하는 함수입니다.
     public void SwapBlocks(int indexA, int indexB)
     {
-        // 1. 내부 데이터 배열의 위치를 바꿉니다.
         int[] data = currentEnemy.GetArray();
         int temp = data[indexA];
         data[indexA] = data[indexB];
@@ -204,7 +259,6 @@ public class BattleManager : MonoBehaviour
 
         Debug.Log($"[BattleManager] 데이터 스왑 완료: {data[indexA]} <-> {data[indexB]}");
 
-        // 2. 바뀐 데이터를 바탕으로 화면의 블록 UI를 즉시 갱신합니다.
         ArrayVisualizer visualizer = FindFirstObjectByType<ArrayVisualizer>();
         if (visualizer != null)
         {
