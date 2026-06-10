@@ -2,9 +2,9 @@ using UnityEngine;
 
 public enum SFXType
 {
-    ButtonClick,    // ⚡ 모든 버튼 클릭음 통합
+    ButtonClick,    // 모든 버튼 클릭음 통합
     PlayerHit,      // 플레이어 피격
-    PlayerBuff,     // ⚡ 체력 회복 및 최대 체력 증가 통합 (Heal + StatUp)
+    PlayerBuff,     // 체력 회복 및 최대 체력 증가 통합 (Heal + StatUp)
     EnemyGimmick,   // 적 방해 공작
     GameOver        // 게임 오버
 }
@@ -30,7 +30,7 @@ public class AudioManager : MonoBehaviour
     [Header("SFX Clips")]
     [SerializeField] private AudioClip buttonClickSFX;
     [SerializeField] private AudioClip playerHitSFX;
-    [SerializeField] private AudioClip playerBuffSFX; // ⚡ 통합된 버프 오디오 클립
+    [SerializeField] private AudioClip playerBuffSFX;
     [SerializeField] private AudioClip enemyGimmickSFX;
     [SerializeField] private AudioClip gameOverSFX;
 
@@ -84,7 +84,7 @@ public class AudioManager : MonoBehaviour
     {
         if (sfxSource != null) 
         {
-            sfxSource.Stop(); // 현재 SFX 오디오 소스에서 재생 중인 모든 소리를 즉시 멈춥니다.
+            sfxSource.Stop();
         }
     }
 

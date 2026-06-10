@@ -8,7 +8,6 @@ public class TitleUI : MonoBehaviour
 
     private void Start()
     {
-        // 타이틀 화면에 진입했을 때 잔잔한 일반 배틀 BGM을 미리 깔아줍니다.
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayBGM(BGMType.NormalBattle);
@@ -23,7 +22,7 @@ public class TitleUI : MonoBehaviour
             AudioManager.Instance.PlaySFX(SFXType.ButtonClick);
         }
 
-        // 메인 게임 씬으로 전환합니다.
+        // 메인 게임 씬으로 전환
         SceneManager.LoadScene(battleSceneName);
     }
 
@@ -34,8 +33,6 @@ public class TitleUI : MonoBehaviour
         {
             if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX(SFXType.ButtonClick);
         }
-
-        Debug.Log("게임이 종료되었습니다.");
         Application.Quit(); // 빌드된 게임을 종료하는 명령 (에디터에서는 작동 안 함)
     }
 }

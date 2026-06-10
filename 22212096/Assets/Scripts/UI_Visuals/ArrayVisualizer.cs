@@ -19,8 +19,6 @@ public class ArrayVisualizer : MonoBehaviour
 
     public void RenderBlocks(int[] data)
     {
-        Debug.Log("초기화: 화면에 숫자 블록들을 배치합니다.");
-
         // 1. 기존 블록 초기화
         foreach (GameObject block in activeBlocks)
         {
@@ -28,7 +26,6 @@ public class ArrayVisualizer : MonoBehaviour
         }
         activeBlocks.Clear();
 
-        // 🔥 [추가된 부분] 현재 스테이지를 확인하여 슬라임 색상을 결정합니다.
         int currentStage = GameManager.Instance.CurrentStage;
         Sprite targetSlimeSprite = greenSlime; // 기본은 초록
 
@@ -46,7 +43,6 @@ public class ArrayVisualizer : MonoBehaviour
         {
             GameObject newBlock = Instantiate(blockPrefab, blockParent);
             
-            // 🔥 [추가된 부분] 생성된 블록의 Image 컴포넌트에 타겟 슬라임 이미지를 넣습니다.
             Image blockImage = newBlock.GetComponent<Image>();
             if (blockImage != null && targetSlimeSprite != null)
             {
@@ -60,7 +56,6 @@ public class ArrayVisualizer : MonoBehaviour
                 textComp.text = data[i].ToString();
             }
 
-            // 기존 로직 유지: 블록에 클릭 이벤트 연결 (선택 정렬용)
             Button blockButton = newBlock.GetComponent<Button>();
             if (blockButton != null)
             {
@@ -76,19 +71,12 @@ public class ArrayVisualizer : MonoBehaviour
                     }
                 });
             }
-            else
-            {
-                Debug.LogWarning("블록 프리팹에 Button 컴포넌트가 없어서 클릭할 수 없습니다!");
-            }
-
             activeBlocks.Add(newBlock);
         }
     }
 
     public IEnumerator PlaySwapAnimation(int indexA, int indexB)
     {
-        Debug.Log($"[연출 시작] {indexA}번 블록과 {indexB}번 블록의 위치를 바꿉니다.");
-
         HighlightBlock(indexA, Color.red);
         HighlightBlock(indexB, Color.red);
 
@@ -110,8 +98,6 @@ public class ArrayVisualizer : MonoBehaviour
         ResetAllBlocksColor();
 
         yield return new WaitForSeconds(0.5f);
-
-        Debug.Log("[연출 완료] 위치 변경 애니메이션이 끝났습니다.");
     }
 
     public void HighlightBlock(int index, Color color)
@@ -136,7 +122,6 @@ public class ArrayVisualizer : MonoBehaviour
             Image blockImage = activeBlocks[i].GetComponent<Image>();
             if (blockImage != null)
             {
-                // 🔥 슬라임 이미지는 그대로 둔 채 '색상 필터(Color)'만 바꿔주므로 안전합니다.
                 if (i == lockedIndex)
                 {
                     blockImage.color = Color.gray;

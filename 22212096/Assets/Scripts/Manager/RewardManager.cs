@@ -40,8 +40,6 @@ public class RewardManager : MonoBehaviour
         // 1. 보스 스테이지 클리어 시 (5의 배수 층)
         if (currentStage % 5 == 0)
         {
-            Debug.Log("보스 스테이지 클리어! 특별 정렬 스킬을 제공합니다.");
-
             rewardButtons[0].gameObject.SetActive(false); 
             rewardButtons[2].gameObject.SetActive(false); 
             
@@ -144,12 +142,10 @@ public class RewardManager : MonoBehaviour
         }
     }
 
-    // 🔥 [새로 추가된 핵심 함수] 진화 창에서 다시 메인 보상 창으로 백(Back)하는 로직
     public void OnClickBackButtonFromEvolution()
     {
         if (skillEvolutionPanel != null) skillEvolutionPanel.SetActive(false);
         if (rewardPanel != null) rewardPanel.SetActive(true);
-        Debug.Log("스킬 진화 창에서 취소하고 메인 리워드 패널로 돌아갑니다.");
     }
 
     private void UnlockNewSkill(string newSkillName)
@@ -229,7 +225,6 @@ public class RewardManager : MonoBehaviour
         if (skillManager != null)
         {
             skillManager.UpgradeSkill(skillName);
-            Debug.Log($"[{skillName}] 스킬 진화 완료!");
         }
 
         CloseRewardAndAdvance();
