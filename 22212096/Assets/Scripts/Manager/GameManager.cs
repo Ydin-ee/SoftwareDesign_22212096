@@ -4,7 +4,6 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    // 싱글톤 인스턴스
     public static GameManager Instance { get; private set; }
 
     [Header("UI References")]
@@ -30,26 +29,37 @@ public class GameManager : MonoBehaviour
     }
 
     public void InitGame()
+{
+    Debug.Log($"--- 스테이지 {currentStage} 시작 ---");
+    
+    BattleManager battleManager = FindFirstObjectByType<BattleManager>();
+    if (battleManager != null)
     {
-        
-        BattleManager battleManager = FindFirstObjectByType<BattleManager>();
-        if (battleManager != null)
-        {
-            battleManager.ChangeState(BattleState.Initializing);
-        }
+        battleManager.ChangeState(BattleState.Initializing);
+    }
 
-        if (AudioManager.Instance != null)
+    if (AudioManager.Instance != null)
+    {
+        if (currentStage % 5 == 0)
         {
-            if (currentStage % 5 == 0)
-                AudioManager.Instance.PlayBGM(BGMType.BossBattle); // 보스층 BGM
-            else
-                AudioManager.Instance.PlayBGM(BGMType.NormalBattle); // 일반층 BGM
+            AudioManager.Instance.PlayBGM(BGMType.BossBattle);
+            UIManager uiManager = FindFirstObjectByType<UIManager>();
+            if (uiManager != null)
+            {
+                uiManager.ShowWarning("<color=red> 보스방 진입! </color>", 1.5f);
+            }
+        }
+        else
+        {
+            AudioManager.Instance.PlayBGM(BGMType.NormalBattle);
         }
     }
+}
 
     public void OnStageCleared()
     {
-        // 일반 보상 층이거나 보스 층(5의 배수)일 때 보상 창
+        Debug.Log($"스테이지 {currentStage} 클리어 성공!");
+
         if (currentStage % rewardInterval == 0 || currentStage % 5 == 0)
         {
             RewardManager rewardManager = FindFirstObjectByType<RewardManager>();
@@ -70,11 +80,10 @@ public class GameManager : MonoBehaviour
         InitGame();
     }
 
-
-
     public void GameOver()
     {
-        // BGM을 멈추고 게임오버 연출음 재생
+        Debug.Log("게임 오버!");
+        
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.StopBGM();
@@ -91,10 +100,10 @@ public class GameManager : MonoBehaviour
         {
             AudioManager.Instance.StopAllSFX();
         }
+        
         currentStage = 1;
-
         Time.timeScale = 1f;
 
-        UnityEngine.SceneManagement.SceneManager.LoadScene("BattleScene");
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene"); 
     }
 }

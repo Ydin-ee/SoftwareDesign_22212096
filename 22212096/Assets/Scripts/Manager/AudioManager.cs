@@ -11,6 +11,7 @@ public enum SFXType
 
 public enum BGMType
 {
+    TitleBGM,
     NormalBattle,   
     BossBattle      
 }
@@ -24,6 +25,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource sfxSource;
 
     [Header("BGM Clips")]
+    [SerializeField] private AudioClip titleBGM;
     [SerializeField] private AudioClip normalBattleBGM;
     [SerializeField] private AudioClip bossBattleBGM;
 
@@ -58,6 +60,7 @@ public class AudioManager : MonoBehaviour
         AudioClip targetClip = null;
         switch (type)
         {
+            case BGMType.TitleBGM: targetClip = titleBGM; break;
             case BGMType.NormalBattle: targetClip = normalBattleBGM; break;
             case BGMType.BossBattle: targetClip = bossBattleBGM; break;
         }

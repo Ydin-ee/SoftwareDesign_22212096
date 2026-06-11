@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -54,12 +54,12 @@ public class RewardManager : MonoBehaviour
             if (bossSkillLevel >= 3)
             {
                 if (rewardTexts[1] != null) 
-                    rewardTexts[1].text = $"✨보스 전리품✨\n[{bossSkillNameKor}] MAX 달성\n(클릭 시 다음 층 이동)";
+                    rewardTexts[1].text = "보스 전리품\n[" + bossSkillNameKor + "] MAX 달성\n(클릭 시 다음 층 이동)";
             }
             else
             {
                 if (rewardTexts[1] != null) 
-                    rewardTexts[1].text = $"✨보스 전리품✨\n[{bossSkillNameKor}] 해금";
+                    rewardTexts[1].text = "보스 전리품\n[" + bossSkillNameKor + "] 해금";
             }
             
             rewardButtons[1].onClick.RemoveAllListeners();

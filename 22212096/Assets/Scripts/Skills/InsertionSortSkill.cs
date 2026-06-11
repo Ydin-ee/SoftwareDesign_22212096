@@ -60,7 +60,10 @@ public class InsertionSortSkill : MonoBehaviour
     private void ExecuteInsertion(int sourceIndex, int destIndex)
     {
         int[] data = battleManager.currentEnemy.GetArray();
-        int temp = data[sourceIndex];
+        int temp = data[sourceIndex]; 
+
+        // 블록이 이동한 거리(밀어낸 블록의 수)를 계산
+        int shiftedDistance = Mathf.Abs(sourceIndex - destIndex);
 
         if (sourceIndex < destIndex)
         {
@@ -77,17 +80,34 @@ public class InsertionSortSkill : MonoBehaviour
             }
         }
         
-        // 비어있는 목표 위치에 값 꽂아 넣기
         data[destIndex] = temp;
 
-        // 화면 갱신
         if (visualizer != null)
         {
             visualizer.RenderBlocks(data);
             visualizer.ResetAllBlocksColor();
         }
 
-        // 사용 완료 후 스킬 종료 및 턴 넘기기
+        Debug.Log($"[{temp}] 값을 {destIndex}번 인덱스에 삽입 완료!");
+
+        // 이동한 거리가 1 이상일 경우 (제자리 이동이 아닐 경우) 회복 발동
+        if (shiftedDistance > 0)
+        {
+            PlayerController player = FindFirstObjectByType<PlayerController>();
+            if (player != null)
+            {
+                // 밀어낸 칸 수 * 4 만큼의 체력을 회복. (예: 3칸 이동 시 12 회복)
+                int healAmount = shiftedDistance * 4;
+                player.Heal(healAmount);
+                
+                UIManager uiManager = FindFirstObjectByType<UIManager>();
+                if (uiManager != null)
+                {
+                    uiManager.ShowWarning($"연쇄 이동 보너스!\n체력 {healAmount} 회복!", 1.5f);
+                }
+            }
+        }
+
         isActive = false;
         selectedSourceIndex = -1;
         battleManager.ChangeState(BattleState.EnemyTurn);
